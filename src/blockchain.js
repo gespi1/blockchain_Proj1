@@ -132,7 +132,7 @@ class Blockchain {
                 await self._addBlock(block)
                 self.validateChain().then((result) => {
                     console.log("chain is valid")
-                }).catch((error) => {console.logs(error)})
+                }).catch((error) => {reject(error)})
                 resolve(block)
             } else {
                 reject(`submission 5 minute period expired: ${parseInt(diffTime/60)} minutes and ${diffTime%60} seconds`)
