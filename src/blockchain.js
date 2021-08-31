@@ -65,21 +65,25 @@ class Blockchain {
     _addBlock(block) {
         let self = this;
         return new Promise(async (resolve, reject) => {
-            let currentHeight = await self.getChainHeight();
-            
-            console.log(currentHeight)
-            if (currentHeight !== -1) {
-                block.previousBlockHash = self.chain[currentHeight].hash
+            try {
+                let currentHeight = await self.getChainHeight();
+                
+                console.log(currentHeight)
+                if (currentHeight !== -1) {
+                    block.previousBlockHash = self.chain[currentHeight].hash
+                }
+
+                block.height = currentHeight + 1
+                block.time = new Date().getTime().toString().slice(0, -3);
+                block.hash = SHA256(JSON.stringify(block)).toString()
+
+                self.height = block.height
+                self.chain.push(block)
+                console.log(self.chain)
+                resolve(block)
+            } catch {
+                reject("there was an error adding block")
             }
-
-            block.height = currentHeight + 1
-            block.time = new Date().getTime().toString().slice(0, -3);
-            block.hash = SHA256(JSON.stringify(block)).toString()
-
-            self.height = block.height
-            self.chain.push(block)
-            console.log(self.chain)
-            resolve(block)
         });
     }
 
@@ -126,6 +130,9 @@ class Blockchain {
                 }
                 let block = new BlockClass.Block({"star": star, "owner": address})
                 await self._addBlock(block)
+                self.validateChain().then((result) => {
+                    console.log("chain is valid")
+                }).catch((error) => {console.logs(error)})
                 resolve(block)
             } else {
                 reject(`submission 5 minute period expired: ${parseInt(diffTime/60)} minutes and ${diffTime%60} seconds`)
@@ -203,7 +210,7 @@ class Blockchain {
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
             if (self.chain.length < 1) {
-                reject("no blocks in the chain")
+                reject(Error("no blocks in the chain"))
             }
 
             for (let i = self.chain.height; i < 0; i--) {
